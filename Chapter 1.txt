@@ -15,13 +15,77 @@ this implies:
     Reading from or writing to a file
     Drawing on the screen
 
-How is this possible ?The answer is that functional programming is a restriction on how we write programs, 
-but not on how programs can express
+How is this possible ? The answer is that functional programming is a restriction on how we write programs, 
+but not on how we can express programs
 
-Pure functions brings modularity, pure functions are easier to test, reuse, parallelize, generalize, and reason about.
+Pure functions brings modularity and ure functions are easier to test, reuse, parallelize, generalize, and reason about.
 
-There are 2 important concepts:
+There are 2 important concepts that must be explored in depth:
 
     referential transparency
-    substitution model
+    the substitution model
+
+FP is a truly radical shift in how programs are organized at every level—from the simplest of 
+loops to high-level program architecture. The style that emerges is quite different, but it’s 
+a beautiful and cohesive approach to programming that we hope you come to appreciate.
+
+We saw in the case of buyCoffee (this example must be read, p 25 - 29) how we could separate 
+the creation of the "Charge" from the interpretation or processing of that "Charge". In general, we’ll learn how this
+sort of transformation can be applied to any function with side effects to push these effects to the outer layers 
+of the program. Functional programmers often speak of implementing programs with a pure core and a thin 
+layer on the outside that handles effects.
+
+
+--- What is exactly a pure function --- 
+
+
+A function f with input type A and output type B (written in Scala as a single type:
+A => B, pronounced “A to B” or “A arrow B”) is a computation that relates every value
+a of type A to exactly one value b of type B such that b is determined solely by the value
+of a. Any changing state of an internal or external process is irrelevant to computing
+the result f(a).
+
+-> i dont need a external information to produce a result B. 
+-> an input (or a set of inputs) with the same value on each method call, will yield the same result, always. 
+   e.g.: getting the length of an array or string will always yield the same value.  
+
+
+Referential Transparency
+
+Referential transparency is used to define pure functions, and is a property of expressions, not functions. 
+An RT expression is an expression that can be replaced by its representing value without changing 
+the meaning of the program
+
+Imagine you had a function 'f(x)', and 'a' where 'f(a) = c'. If 'c' can be replaced in the system anywhere 
+'f(a)' is defined, then that function has RT, but if 'f(a)' have side effects, my system wont behave as 
+expected if i used 'c' instead of 'f(a)'
+
+The latter, in a simplified version, means that everything a function DOES is represented by the value that it returns,
+according to the result type of the function. This constraint enables to  imagine that computation proceeds 
+much like we’d solve an algebraic EQUATION. We fully expand every part of an expression, replacing all variables 
+with their referents, and then reduce it to its simplest form.
+
+Here is an example where an expression (x) has RT
+
+    val x = "Hello, World"
+    val r1 = x.reverse
+    r1: String = dlroW ,olleH
+
+if we replace x with its value "Hello, World", r1 still holds the same result
+
+    "Hello, World".reverse
+    r1: String = dlroW ,olleH
+
+
+Now, inmutability plays a major role. If we change a parameter, the function return value MAY yield
+a different result. Lets use an example with String builder, which can be mutated. 
+
+
+    val x = new StringBuilder("Hello")
+    val y = x.append(", World")
+
+    val r1 = y.toString
+    val r2 = y.toString  // r1 and r2 are equal
+
+now, lets make a substitution on the variable 'y'
 
