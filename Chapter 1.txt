@@ -52,7 +52,7 @@ the result f(a).
 
 Referential Transparency
 
-Referential transparency is used to define pure functions, and is a property of expressions, not functions. 
+Referential transparency is used to define pure functions, and is a property from expressions and not only functions. 
 An RT expression is an expression that can be replaced by its representing value without changing 
 the meaning of the program
 
@@ -60,26 +60,27 @@ Imagine you had a function 'f(x)', and 'a' where 'f(a) = c'. If 'c' can be repla
 'f(a)' is defined, then that function has RT, but if 'f(a)' have side effects, my system wont behave as 
 expected if i used 'c' instead of 'f(a)'
 
+
+Substitution model
+
 The latter, in a simplified version, means that everything a function DOES is represented by the value that it returns,
 according to the result type of the function. This constraint enables to  imagine that computation proceeds 
 much like we’d solve an algebraic EQUATION. We fully expand every part of an expression, replacing all variables 
-with their referents, and then reduce it to its simplest form.
+with their referents, and then reduce it to its simplest form. This is the substitution model.
 
 Here is an example where an expression (x) has RT
 
     val x = "Hello, World"
-    val r1 = x.reverse
-    r1: String = dlroW ,olleH
+    val r1 = x.reverse // r1: String = dlroW ,olleH
 
-if we replace x with its value "Hello, World", r1 still holds the same result
+if we replace x with its value "Hello, World", r1 still holds the same result (repeat this operation n times,
+and n times we will have the same result)
 
-    "Hello, World".reverse
-    r1: String = dlroW ,olleH
+    "Hello, World".reverse // r1: String = dlroW ,olleH
 
 
-Now, inmutability plays a major role. If we change a parameter, the function return value MAY yield
+Now, inmutability plays a major role. If we change the original parameter, the function return value MAY yield
 a different result. Lets use an example with String builder, which can be mutated. 
-
 
     val x = new StringBuilder("Hello")
     val y = x.append(", World")
@@ -89,3 +90,43 @@ a different result. Lets use an example with String builder, which can be mutate
 
 now, lets make a substitution on the variable 'y'
 
+    val x = new StringBuilder("Hello")
+    val r1 = x.append(", World").toString
+    val r2 = x.append(", World").toString  // r2 = "Hello, World, World"
+
+Note that we had to make 2 calls, it wasn't enough to prove the referential transparency with r1.
+This means that you have to think if that substitution holds true for "n" replacements
+
+beare with me, you can skip this quotes:
+
+    Conversely, the substitution model is simple to reason about since effects of evalua-
+    tion are purely local (they affect only the expression being evaluated) and we need
+    not mentally simulate sequences of state updates to understand a block of code.
+    Understanding requires only local reasoning. We need not mentally TRACK all the state
+    changes that may occur BEFORE or AFTER our function’s execution to understand what
+    our function will do; we simply look at the function’s definition and substitute the
+    arguments into its body. 
+
+-> Think of an expression composed of pure functions. You dont have to follow a track of each
+function call side effect if they have referential transparency, is much easier to read and
+understand. 
+
+    Formalizing the notion of purity this way gives insight into why functional pro-
+    grams are often more modular. Modular programs consist of components that can be
+    understood and reused independently of the whole, such that the meaning of the
+    whole depends only on the MEANING of the components and the rules GOVERNING their
+    composition; that is, they are composable. A pure function is modular and composable
+    because it separates the logic of the computation itself from “what to do with the
+    result” and “how to obtain the input”; it’s a black box. Input is obtained in exactly one
+    way: via the argument(s) to the function. And the output is simply computed and
+    returned. By keeping each of these concerns separate, the logic of the computation is
+    more reusable; we may reuse the logic wherever we want without worrying about
+    whether the side effect being done with the result or the side effect requesting the
+    input are appropriate in all contexts
+
+-> when a function is pure, how it's invoked, and how it's results are used, are responsabilities
+   from an external component. Meaning that our pure function is multipurpose. This is meant by 
+   "separating the logic from the implementation". Its a black box, becuase nothing comes in or out
+   while its logic it's processed 
+
+ 
