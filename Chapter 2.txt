@@ -1,2 +1,153 @@
 
 modules, objects and namespaces
+
+A module provides (which can be an object, or a class) a NAMESPACE to its members.
+A member can be a method, a value, or another object inside that module. 
+
+We can bring an object’s member into scope by importing it, which allows us to call
+it unqualified from then on:
+
+    import MyModule.abs   // abs is a member (a method) of MyModule
+    abs(-42)    
+
+We can bring all of an object’s (nonprivate) members into scope by using the under-
+score syntax:
+
+
+--- Higher-order functions: passing functions to functions ---
+
+
+The first new idea is this: functions are values. And just like values of other types—such 
+as integers, strings, and lists—functions  can be assigned to variables, stored 
+in data structures, and passed as arguments to functions.
+
+
+--- Writing loops functionally ---
+
+
+def factorial(n: Int): Int = {
+    
+    @annotation.tailrec
+    def loop(n: Int, acc: Int): Int =     // this is called an inner function, or local definition
+    if (n <= 0) acc
+    else go(n-1, n*acc)
+
+    go(n, 1)
+}
+
+The way we write loops functionally, without mutating a loop variable, is with a recur-
+sive function.
+
+this kind of loop is identified by scala. Scala compiles it to the same
+sort of bytecode a 'while loop' emits. This optimization is only applied
+if the recursive call is in tail position. Here, loops dont consume call 
+stack frames for each iteration.
+
+A recursion that is not tail recursive, is as follows:
+
+    1 + go(n-1,n*acc),
+
+Note that on each iteration there is work left to do (1 + expression). 
+
+We use the annotation "@annotation.tailrec" to throw an error
+if Scala is unable to eliminate the 'tail calls' in our recursive functions
+
+
+--- ~ Writing Higher-order functions ---
+
+
+Take a look at the following example. Using HOFs, we will create generic
+functions for a broader set of use cases.
+
+Say that we want to return a message stating an integer 'absolute' or 
+'factorial' value. 
+
+Something like this:
+
+
+    Object MyModule {
+        
+        // factorial and absolute functions 
+
+        private def formatAbs(x: Int) = {
+            val msg = "The absolute value of %d is %d."
+            msg.format(x, abs(x))
+        }
+
+        private def formatFactorial(n: Int) = {
+            val msg = "The factorial of %d is %d."
+            msg.format(n, factorial(n))
+        }
+
+        def main(args: Array[String]): Unit = {
+            println(formatAbs(-42))
+            println(formatFactorial(7))
+        }
+    }
+
+You may use a HOF that's in charge of performing the operation value.
+like this:
+
+    def formatResult(name: String, n: Int, f: Int => Int) = {
+        val msg = "The %s of %d is %d."
+        msg.format(name, n, f(n))
+    }
+
+But, this solution is not yet what we should desire
+
+
+---- Polymorphic functions: abstracting over types --- 
+
+
+Often, and especially when writing HOFs, we want to
+write code that works for any type it’s given.  
+These are called polymorphic functions, 
+
+In the last function the HOF 'f' is bound to only receive and return a type: Int
+
+lets give an example where polymorphic functions are proper solutions (the example in 
+the last section is ellegible too). We are going to code a function that returns
+an index from an array where the first occurrence of the variable 'key' is found
+
+    def findFirst(ss: Array[String], key: String): Int = {
+        @annotation.tailrec
+        def loop(n: Int): Int =
+            if (n >= ss.length) -1
+            else if (ss(n) == key) n
+            else loop(n + 1)
+
+        loop(0)
+    }
+
+What’s important is that the code for findFirst will look almost identical if we’re 
+searching for a String in an Array[String], an Int in an Array[Int], or an A in an Array[A]
+for any given type A.
+
+
+
+
+
+
+
+
+
+
+
+
+
+exercises
+
+    2.1 write a recursive function to get the nth fobonacci number (pagina 42)
+
+def getFibonacciNumber(n: Int) = {
+  @annotation.tailrec
+  def fib(prev1: Int, prev2: Int, currentPos: Int): Int = {
+    val currentPosValue = prev1 + prev2
+    if (currentPos == n) currentPosValue
+    else fib(prev2, currentPosValue, currentPos + 1)
+  }
+  
+  fib(0,1,2)
+}
+
+getFibonacciNumber(4)
