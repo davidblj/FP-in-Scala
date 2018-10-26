@@ -1,0 +1,31 @@
+
+
+--- Improving type inference for higher-order functions ---
+
+
+Recall the dropWhile function:
+
+    def dropWhile[A](l: List[A], f: A => Boolean): List[A]
+
+You execute the previous function specifying the type of the arguments in the anon function.
+
+    val ex1 = dropWhile(xs, (x: Int) => x < 4)      // specify type
+
+This is not ideal. And the solution is not either, but is prefered over typed arguments. We’ll often group 
+and order our function arguments into multiple argument lists to maximize type inference.
+
+You need to curry the function like so:
+
+    def dropWhile[A](as: List[A])(f: A => Boolean): List[A] =
+        as match {
+            case Cons(h,t) if f(h) => dropWhile(t)(f)
+            case _ => as
+        }
+
+    dropWhile(xs)(f)    // take a look at this: you don't need to specify its type.
+                        // scala can infer the type|
+
+More generally, when a function definition contains multiple argument groups,
+type information flows from left to right across these argument groups. Here, the first
+argument group fixes the type parameter A of dropWhile to Int, so the annotation on
+x => x < 4 is not required.8
