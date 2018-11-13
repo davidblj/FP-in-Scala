@@ -1,7 +1,8 @@
 
-modules, objects and namespaces
+---- modules, objects and namespaces ---
 
-A module provides (which can be an object, or a class) a NAMESPACE to its members.
+
+A module (an object or class) provides a NAMESPACE to its members.
 A member can be a method, a value, or another object inside that module. 
 
 We can bring an object’s member into scope by importing it, which allows us to call
@@ -13,17 +14,22 @@ it unqualified from then on:
 We can bring all of an object’s (nonprivate) members into scope by using the under-
 score syntax:
 
+    import MyModule._
+
 
 --- Higher-order functions: passing functions to functions ---
 
 
-The first new idea is this: functions are values. And just like values of other types—such 
-as integers, strings, and lists—functions  can be assigned to variables, stored 
+The first new idea is this: functions are values. And just like values of other types— such 
+as integers, strings, and lists— functions can be assigned to variables, stored 
 in data structures, and passed as arguments to functions.
 
 
 --- Writing loops functionally ---
 
+
+The way we write loops functionally, without mutating a loop variable, is with a recur-
+sive function.
 
 def factorial(n: Int): Int = {
     
@@ -35,10 +41,7 @@ def factorial(n: Int): Int = {
     go(n, 1)
 }
 
-The way we write loops functionally, without mutating a loop variable, is with a recur-
-sive function.
-
-this kind of loop is identified by scala. Scala compiles it to the same
+this is an special loop and is identified by scala. Scala compiles it to the same
 sort of bytecode a 'while loop' emits. This optimization is only applied
 if the recursive call is in tail position. Here, loops dont consume call 
 stack frames for each iteration.
@@ -99,8 +102,7 @@ But, this solution is not yet what we should desire
 ---- Polymorphic functions: abstracting over types --- 
 
 
-Often, and especially when writing HOFs, we want to
-write code that works for any type it’s given.  
+Often, and especially when writing HOFs, we want to write code that works for any type it’s given.  
 These are called polymorphic functions, 
 
 In the last function the HOF 'f' is bound to only receive and return a type: Int
@@ -121,26 +123,77 @@ an index from an array where the first occurrence of the variable 'key' is found
 
 What’s important is that the code for findFirst will look almost identical if we’re 
 searching for a String in an Array[String], an Int in an Array[Int], or an A in an Array[A]
-for any given type A.
-
-44
+for any given type A:
 
 
+     def findFirst[A](ss: Array[A], p: A => Boolean): Int = {   // this line implies that 'Array[A]'
+                                                                // and 'p: A' must yield the same type
+        @annotation.tailrec
+        def loop(n: Int): Int =
+            if (n >= ss.length) -1
+            else if (p(ss(n))) n
+            else loop(n + 1)
+
+        loop(0)
+    }
+
+On this new version, we’re abstracting over the type of the array and the function used for searching it. 
+This is a polymorphic function
+
+The type parameter list (method[A,B,C](...)) introduces type variables that can be referenced in the rest
+of the type signature (exactly analogous to how variables are introduced in the parameter
+list to a function can be referenced in the body of the function)
+
+
+--- Calling HOFs with anonymous functions ---
+
+
+When we define a function literal, what is actually being defined in Scala is an object
+with a method called apply.
+
+A function literal like (a, b) => a < b, is really syntactic sugar for object creation:
+
+    val lessThan = new Function2[Int, Int, Boolean] {
+        def apply(a: Int, b: Int) = a < b
+    }
+
+In some cases, function signatures can be implemented in only 1 way. When this happens, you dont to 
+specify the parameter and retuns types. Take a look at the following example:
+    
+    def partial1[A,B,C](a: A, f: (A,B) => C): B => C =
+        (b: B) => f(a,b)         // we are returning a function, which is a literal
+
+Note that the type annotation on b isn’t needed here. Since we told Scala the
+return type would be B => C , Scala knows the type of b from the context and we could
+just write b => f(a,b) as the implementation:
+
+    def partial1[A,B,C](a: A, f: (A,B) => C): B => C = {
+        (b) => f(a, b)
+    }
+
+The last function is known as a partial application: we are returning 'f' with a value 'a', but not a value 'b'
+
+A common use case between 2 monadic functions, is to be able to chain them. We build our custom "compose" function
+in the exercise 2.5. Scala provides "compose" as a method on Function1: f compose g. An equivalent to
+"compose" is "andThen", but the argument order changes entirely: f compose g ~ g andThen f
+
+Polymorphic, higher-order functions often end up being extremely widely applicable, precisely because they 
+say nothing about any particular domain and are simply abstracting over a common pattern that occurs in many con-
+texts.
+
+Although we haven’t yet written any large or complex programs, the principles
+we’ve discussed here are scalable and apply equally well to programming in the large
+as they do to programming in the small
 
 
 
+Exercises
 
-
-
-
-
-
-
-exercises
 
     2.1 write a recursive function to get the nth fobonacci number (pagina 42)
 
 def getFibonacciNumber(n: Int) = {
+    
   @annotation.tailrec
   def fib(prev1: Int, prev2: Int, currentPos: Int): Int = {
     val currentPosValue = prev1 + prev2
@@ -152,3 +205,47 @@ def getFibonacciNumber(n: Int) = {
 }
 
 getFibonacciNumber(4)
+
+
+    2.2 Implement isSorted , which checks whether an Array[A] is sorted according to a
+    given comparison function:
+
+def isSorted[A](as: Array[A], ordered: (A,A) => Boolean): Boolean = {
+
+  def loop(i: Int, state: Boolean): Boolean = {
+    if (!state) false
+    else if (i == as.length) state
+    else loop(i + 1, ordered(as(i-1), as(i)))
+  }
+
+  loop(1, state = true)
+}
+
+val array = Array(1,5,6,8)
+isSorted[Int](array, (a: Int, b: Int) => a < b) // you may specify which type
+//isSorted(array, (a: Int, b: Int) => a < b)    // or let the compiler decide
+
+
+    2.3 Let’s look at another example, currying, which converts a function f of two arguments
+    into a function of one argument that partially applies f. Here again there’s only one
+    implementation that compiles. Write this implementation:
+
+def curry[A,B,C](f: (A, B) => C): A => (B => C) = {
+        a => ( b => f(a,b) )
+}
+
+
+    2.4 Implement uncurry , which reverses the transformation of curry . Note that since =>
+       associates to the right, A => (B => C) can be written as A => B => C .
+
+def uncurry[A,B,C](f: A => B => C): (A, B) => C = {
+  (a,b) => f(a)(b)
+}
+
+
+    2.5 Implement the higher-order function that composes two functions.
+
+def compose[A,B,C](f: B => C, g: A => B): A => C = {
+  a => f(g(a))
+}
+
